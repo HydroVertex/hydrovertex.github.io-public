@@ -2,33 +2,43 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ "main" ]  # 当main分支更新时触发
+    branches: [ "main" ]
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions: 
+      contents: write  # 关键：授予写入权限
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 构建步骤（根据你的框架调整）
-      # 示例1: 纯静态站点（无需构建）
-      - name: Copy files
+      # ======== 静态站点专用配置（无需构建） ========
+      - name: Prepare public directory
         run: |
           mkdir -p public
-          cp -r * public/   # 直接复制所有文件到public目录
+          # 复制所有可见文件（排除.git等隐藏文件）
+          find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.git' ! -name '.github' -exec cp -r {} public/ \;
+          
+      # ======== Jekyll 站点示例 ========
+      # - name: Set up Ruby
+      #   uses: ruby/setup-ruby@v1
+      #   with:
+      #     ruby-version: '3.1'
+      # - name: Install dependencies
+      #   run: bundle install
+      # - name: Build site
+      #   run: bundle exec jekyll build --destination ./public
 
-      # 示例2: 使用Hugo构建
-      # - name: Setup Hugo
-      #   uses: peaceiris/actions-hugo@v2
-      # - name: Build
-      #   run: hugo --minify
+      # ======== 通用部署步骤 ========
+      - name: Verify public directory
+        run: ls -la public/  # 调试：确认目录内容
 
-      # 部署到gh-pages分支
-      - name: Deploy
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public    # 构建输出目录
-          publish_branch: gh-pages # 目标分支
+          publish_dir: ./public
+          publish_branch: gh-pages
+          force_orphan: true  # 强制清空目标分支历史
