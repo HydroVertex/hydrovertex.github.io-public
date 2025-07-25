@@ -1,0 +1,34 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ "main" ]  # 当main分支更新时触发
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 构建步骤（根据你的框架调整）
+      # 示例1: 纯静态站点（无需构建）
+      - name: Copy files
+        run: |
+          mkdir -p public
+          cp -r * public/   # 直接复制所有文件到public目录
+
+      # 示例2: 使用Hugo构建
+      # - name: Setup Hugo
+      #   uses: peaceiris/actions-hugo@v2
+      # - name: Build
+      #   run: hugo --minify
+
+      # 部署到gh-pages分支
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public    # 构建输出目录
+          publish_branch: gh-pages # 目标分支
